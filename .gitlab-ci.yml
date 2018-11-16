@@ -1,0 +1,29 @@
+stages:
+    - build
+    - release
+
+build_aliyun-iot-sdk-c:
+    stage: build
+    tags:
+        - 4530-arm-linux-gnueabihf-5.1
+    only:
+        - branches
+    script:
+        - ./setup.sh
+        - ./build.sh
+
+release_aliyun-iot-sdk-c:
+    stage: release
+    tags:
+        - 4530-arm-linux-gnueabihf-5.1
+    only:
+        - tags
+    variables:
+        REPOSITORY: "git@github.com:kbwilson89/aliyun-iot-sdk-c.git"
+        BRANCH: "master"
+    script:
+        - ./setup.sh
+        - ./build.sh
+        - git checkout -B $BRANCH
+        - git push $REPOSITORY $BRANCH --tags --force
+
