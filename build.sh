@@ -1,44 +1,34 @@
 #!/bin/bash
-#
-# Copyright © 2018 Moxa Inc. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
+# Copyright (C) 2019 Moxa Inc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 DIR_WRK=$(dirname $(readlink -e $0))
-
-CONFIG=config.ubuntu.arm
 
 DIR_SDK=$DIR_WRK/output/sdk_aliyun
 DIR_ENV=$DIR_WRK/output/env_aliyun
 
-SRC_CONFIG=$DIR_WRK/config
-DST_CONFIG=$DIR_SDK/src/configs
+SRC_CONFIG_FILE=$DIR_WRK/config/config.ubuntu.arm
+DST_CONFIG_FILE=$DIR_SDK/src/configs/config.ubuntu.arm
 
-OVERRIDE_CC="OVERRIDE_CC = $DIR_ENV/bin/arm-linux-gnueabihf-gcc"
-OVERRIDE_AR="OVERRIDE_AR = $DIR_ENV/bin/arm-linux-gnueabihf-gcc-ar"
+SRC_SAMPLE=$DIR_SDK/output/release/bin
+DST_SAMPLE=$DIR_WRK/sample/binary
 
 function sdk_build()
 {
     echo "-- Process: $FUNCNAME ..."
-    cp $SRC_CONFIG/$CONFIG $DST_CONFIG/$CONFIG
-    sed -i "s/OVERRIDE_CC.*/${OVERRIDE_CC//\//\\/}/g" $DST_CONFIG/$CONFIG
-    sed -i "s/OVERRIDE_AR.*/${OVERRIDE_AR//\//\\/}/g" $DST_CONFIG/$CONFIG
+    rm -rf $DST_SAMPLE
+    mkdir -p $DST_SAMPLE
+    cp $SRC_CONFIG_FILE $DST_CONFIG_FILE
+    echo "LDFLAGS += -liothinxio" >> $DST_CONFIG_FILE
+    echo "LDFLAGS += -L$DIR_ENV/arm-linux-gnueabihf/libc/usr/lib/iothinx" >> $DST_CONFIG_FILE
+    echo "RPATH_CFLAGS += -Wl,-rpath,/usr/lib/iothinx" >> $DST_CONFIG_FILE
+    echo "OVERRIDE_CC = $DIR_ENV/bin/arm-linux-gnueabihf-gcc" >> $DST_CONFIG_FILE
+    echo "OVERRIDE_AR = $DIR_ENV/bin/arm-linux-gnueabihf-gcc-ar" >> $DST_CONFIG_FILE
     pushd $DIR_SDK > /dev/null
     make reconfig <<< 1
     make
     popd > /dev/null
+    cp $SRC_SAMPLE/moxa_sample_mqtt $DST_SAMPLE
     echo "-- Process: $FUNCNAME DONE!!"
 }
 

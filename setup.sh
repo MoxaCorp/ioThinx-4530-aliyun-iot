@@ -1,38 +1,32 @@
 #!/bin/bash
-#
-# Copyright © 2018 Moxa Inc. All rights reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
-
+# Copyright (C) 2019 Moxa Inc. All rights reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 DIR_WRK=$(dirname $(readlink -e $0))
 SCRIPT=$(basename $0)
 
 GIT_SDK=https://github.com/aliyun/iotkit-embedded.git
 VER_SDK=RELEASED_V2.03
-SRC_TOOLCHAIN=/usr/local/bin/gcc-linaro-5.1-2015.08-x86_64_arm-linux-gnueabihf
+SRC_TOOLCHAIN=/usr/local/arm-linux-gnueabihf
 
 DST_SDK=$DIR_WRK/output/sdk_aliyun
 DST_TOOLCHAIN=$DIR_WRK/output/env_aliyun
 
+MAKE_SAMPLE=$DST_SDK/src/scripts/parse_make_settings.mk
+SRC_SAMPLE=$DIR_WRK/sample/source
+
 function sdk_update()
 {
     echo "-- Process: $FUNCNAME ..."
+
     pushd $DST_SDK > /dev/null
     git checkout -q $VER_SDK
     git submodule update --init --recursive
     popd > /dev/null
+
+    ln -s $SRC_SAMPLE $DST_SDK
+    echo "SUBDIRS += source" >> $MAKE_SAMPLE
+
     echo "-- Process: $FUNCNAME DONE!!"
 }
 
