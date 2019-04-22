@@ -14,10 +14,8 @@ build_aliyun-iot-sdk-c:
     script:
         - ./setup.sh
         - ./build.sh
-        - shopt -s extglob
-        - rm -rf sample/binary output upload
         - mkdir -p upload/aliyun-iot-sdk-c
-        - cp -r !(upload) upload/aliyun-iot-sdk-c
+        - cp -r readme README.md upload/aliyun-iot-sdk-c
         - scm upload $CI_COMMIT_REF_NAME
 
 release_aliyun-iot-sdk-c:
@@ -27,15 +25,13 @@ release_aliyun-iot-sdk-c:
     only:
         - tags
     variables:
-        REPOSITORY: "git@github.com:kbwilson89/aliyun-iot-sdk-c.git"
+        REPOSITORY: "git@github.com:MoxaCorp/ioThinx-4530-aliyun-iot.git"
         BRANCH: "master"
     script:
         - ./setup.sh
         - ./build.sh
-        - shopt -s extglob
-        - rm -rf sample/binary output upload
         - mkdir -p upload/aliyun-iot-sdk-c
-        - cp -r !(upload) upload/aliyun-iot-sdk-c
+        - cp -r readme README.md upload/aliyun-iot-sdk-c
         - scm upload $CI_COMMIT_REF_NAME
         - git checkout -B $BRANCH
         - git push $REPOSITORY $BRANCH --tags --force

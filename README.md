@@ -3,15 +3,17 @@
 
 # ALIYUN-IOT-SDK-C
 
-> **Description:**
+> **Table of Contents**
 >
-> Cloud: Create device instance for connecting by SDK program
+> [Cloud: Create device instance for connecting by SDK program](#cloud-aliyun)
 >
-> Host: Cross-compiling the SDK
+> [Host: Cross-compiling the SDK](#host-x86_64-linux)
 >
-> Target: Executing the SDK program
+> [Target: Executing the SDK program](#target-arm-linux)
 
 ## Cloud (Aliyun)
+
+> Create device instance for connecting by SDK program
 
 ### Sign in to Cloud
 
@@ -65,6 +67,10 @@
 
 ### Copy Device Identification
 
+> **Device Identification** is the key to build connection between physical and virtual device on cloud
+>
+> You will need this infomation in the section [Build the SDK](#build-the-sdk)
+
 1. In the left navigation pane, expand **Devices** and then choose **Device**. On the **Devices** page, search for the **[Device you create before]** then choose **View**.
 
     ![copy_device_identification_01][copy_device_identification_01]
@@ -74,6 +80,8 @@
     ![copy_device_identification_02][copy_device_identification_02]
 
 ### View Device Log
+
+> You can view the following device log after section [Execute the SDK](#execute-the-sdk)
 
 1. In the left navigation pane, expand **Devices** and then choose **Product**. On the **Products** page, search for the **[Product you create before]** then choose **View**.
 
@@ -86,6 +94,8 @@
     ![view_device_log_04][view_device_log_04]
 
 ## Host (x86_64-linux)
+
+> Cross-compiling the SDK
 
 ### Setup the Environment
 
@@ -101,15 +111,24 @@
 
 ### Build the SDK
 
-1. Setup dependencies and SDK to output directory.
+1. Clone repository of MOXA cloud connectivity tool from github.
 
     ```
-    $ ./setup.sh
+    user@Linux:~$ git clone https://github.com/MoxaCorp/ioThinx-4530-aliyun-iot.git
+    ```
+
+2. Setup dependencies and SDK to output directory.
+
+    ```
+    user@Linux:~$ cd aliyun
+    ```
+    ```
+    user@Linux:~/aliyun$ ./setup.sh
     ```
     * For more setup.sh options.
 
     ```
-    $ ./setup.sh --help
+    user@Linux:~/aliyun$ ./setup.sh --help
 
     Usage: ./setup.sh [options]
 
@@ -131,10 +150,10 @@
                             ./setup.sh --toolchain /usr/local/arm-linux-gnueabihf
     ```
 
-2. Add the device identification **ProductKey**, **DeviceName** and **DeviceSecret** to SDK sample code such as example **mqtt-example.c**. [[Copy Device Identification](#copy-device-identification)]
+3. Add the device identification **ProductKey**, **DeviceName** and **DeviceSecret** to SDK sample code such as example **mqtt-example.c**. [[Copy Device Identification](#copy-device-identification)]
 
     ```
-    $ vim output/sdk_aliyun/sample/mqtt/mqtt-example.c
+    user@Linux:~/aliyun$ vim output/sdk_aliyun/sample/mqtt/mqtt-example.c
     ```
     ```
     #define PRODUCT_KEY             "a14qsGgMTtk"
@@ -142,15 +161,15 @@
     #define DEVICE_SECRET           "CTA83oLWKq2n0YgvveFZusvVqeA0EVTq"
     ```
 
-3. Build the whole SDK.
+4. Build the whole SDK.
 
     ```
-    $ ./build.sh
+    user@Linux:~/aliyun$ ./build.sh
     ```
     * All compiled SDK program can be found in the following directory, including example **mqtt-example**.
 
     ```
-    $ tree output/sdk_aliyun/output/release/bin
+    user@Linux:~/aliyun$ tree output/sdk_aliyun/output/release/bin
     output/sdk_aliyun/output/release/bin
     ├── coap-example
     ├── http-example
@@ -165,7 +184,7 @@
 * You can also reference to the MOXA sample code with ioThinx I/O library **moxa_sample_mqtt.c** in the following directory.
 
     ```
-    $ tree sample
+    user@Linux:~/aliyun$ tree sample
     sample
     ├── binary
     │   └── moxa_sample_mqtt
@@ -183,6 +202,8 @@
 
 ## Target (arm-linux)
 
+> Executing the SDK program
+
 ### Setup the Environment
 
 1. Setup a network connection to allow target able to access the network.
@@ -196,7 +217,7 @@
 3. Copy compiled SDK program from host to target.
 
     ```
-    $ tree
+    moxa@Moxa:~$ tree
     .
     └── mqtt-example
     ```
@@ -206,9 +227,8 @@
 1. Execute SDK program that cross-compiled by host.
 
     ```
-    $ sudo ./mqtt-example
+    moxa@Moxa:~$ sudo ./mqtt-example
     ```
-    * You need to install the dependency library for the SDK program if any not found.
 
 2. [View device log on cloud](#view-device-log).
 
