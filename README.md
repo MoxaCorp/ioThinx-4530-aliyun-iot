@@ -1,7 +1,7 @@
 <!-- Copyright (C) 2019 Moxa Inc. All rights reserved. -->
 <!-- SPDX-License-Identifier: Apache-2.0               -->
 
-# ALIYUN-IOT-SDK-C
+# ioThinx-4530-aliyun-iot
 
 > **Table of Contents**
 >
@@ -120,15 +120,15 @@
 2. Setup dependencies and SDK to output directory.
 
     ```
-    user@Linux:~$ cd aliyun
+    user@Linux:~$ cd ioThinx-4530-aliyun-iot
     ```
     ```
-    user@Linux:~/aliyun$ ./setup.sh
+    user@Linux:~/ioThinx-4530-aliyun-iot$ ./setup.sh
     ```
     * For more setup.sh options.
 
     ```
-    user@Linux:~/aliyun$ ./setup.sh --help
+    user@Linux:~/ioThinx-4530-aliyun-iot$ ./setup.sh --help
 
     Usage: ./setup.sh [options]
 
@@ -153,7 +153,7 @@
 3. Add the device identification **ProductKey**, **DeviceName** and **DeviceSecret** to SDK sample code such as example **mqtt-example.c**. [[Copy Device Identification](#copy-device-identification)]
 
     ```
-    user@Linux:~/aliyun$ vim output/sdk_aliyun/sample/mqtt/mqtt-example.c
+    user@Linux:~/ioThinx-4530-aliyun-iot$ vim output/sdk_aliyun/sample/mqtt/mqtt-example.c
     ```
     ```
     #define PRODUCT_KEY             "a14qsGgMTtk"
@@ -164,12 +164,12 @@
 4. Build the whole SDK.
 
     ```
-    user@Linux:~/aliyun$ ./build.sh
+    user@Linux:~/ioThinx-4530-aliyun-iot$ ./build.sh
     ```
     * All compiled SDK program can be found in the following directory, including example **mqtt-example**.
 
     ```
-    user@Linux:~/aliyun$ tree output/sdk_aliyun/output/release/bin
+    user@Linux:~/ioThinx-4530-aliyun-iot$ tree output/sdk_aliyun/output/release/bin
     output/sdk_aliyun/output/release/bin
     ├── coap-example
     ├── http-example
@@ -181,10 +181,10 @@
     └── shadow-example
     ```
 
-* You can also reference to the MOXA sample code with ioThinx I/O library **moxa_sample_mqtt.c** in the following directory.
+* You can also reference to the MOXA sample code with ioThinx I/O library **moxa_sample_mqtt.c** in the following directory. This sample code can be executed directly on the target device with module 45MR-2606 located in slot 1.
 
     ```
-    user@Linux:~/aliyun$ tree sample
+    user@Linux:~/ioThinx-4530-aliyun-iot$ tree sample
     sample
     ├── binary
     │   └── moxa_sample_mqtt
