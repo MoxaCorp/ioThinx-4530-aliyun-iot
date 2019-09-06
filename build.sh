@@ -2,6 +2,7 @@
 # Copyright (C) 2019 Moxa Inc. All rights reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+set -e
 DIR_WRK=$(dirname $(readlink -e $0))
 
 DIR_SDK=$DIR_WRK/output/sdk_aliyun

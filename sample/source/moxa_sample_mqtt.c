@@ -1,12 +1,14 @@
 // Copyright (C) 2019 Moxa Inc. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+// Include Standard Library
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+// Include ioThinx I/O Library
 #include <iothinx/iothinxio.h>
-
+// Include Aliyun Library
 #include "iot_import.h"
 #include "iot_export.h"
 #include "lite-utils.h"
@@ -27,6 +29,14 @@
 #define YIELD_TIMEOUT_MS        2000
 #define BUF_SIZE                1024
 
+/*
+ * event_handle:
+ *   - Show result when a event occurs.
+ * Parameter:
+ *   - pcontext : The program context.
+ *   - pclient  : The MQTT client.
+ *   - msg      : The event message.
+ */
 static void event_handle(void *pcontext, void *pclient, iotx_mqtt_event_msg_pt msg)
 {
     uintptr_t packet_id = (uintptr_t)msg->msg;
@@ -86,6 +96,14 @@ static void event_handle(void *pcontext, void *pclient, iotx_mqtt_event_msg_pt m
     }
 }
 
+/*
+ * subscribe_callback:
+ *   - Set DO value to I/O module when a message is received on a subscribed topic.
+ * Parameter:
+ *   - pcontext : The program context.
+ *   - pclient  : The MQTT client.
+ *   - msg      : The event message.
+ */
 static void subscribe_callback(void *pcontext, void *pclient, iotx_mqtt_event_msg_pt msg)
 {
     int rc = 0;
@@ -98,23 +116,27 @@ static void subscribe_callback(void *pcontext, void *pclient, iotx_mqtt_event_ms
            ptopic_info->topic_len, ptopic_info->ptopic,
            ptopic_info->payload_len, ptopic_info->payload);
 
+    // Aliyun: Get Device ID.
     val = LITE_json_value_of(DEVICEID_KEY, (char *)ptopic_info->payload);
     if (val == NULL)
     {
         return;
     }
 
+    // Aliyun: Check Device ID.
     if (strcmp(DEVICEID_VAL, LITE_json_value_of(DEVICEID_KEY, (char *)ptopic_info->payload)) != 0)
     {
         return;
     }
 
+    // Aliyun: Get DO value.
     val = LITE_json_value_of(DO_SETVALUES_KEY, (char *)ptopic_info->payload);
     if (val == NULL)
     {
         return;
     }
 
+    // ioThinx: Set DO value.
     rc = ioThinx_DO_SetValues(slot, strtoul(val, NULL, 0));
     if (rc != IOTHINX_ERR_OK)
     {
@@ -123,10 +145,15 @@ static void subscribe_callback(void *pcontext, void *pclient, iotx_mqtt_event_ms
     }
 
     printf("%s SUCCESS !!\r\n", DO_SETVALUES_KEY);
-
     return;
 }
 
+/*
+ * mqtt_client:
+ *   - Establish connection between the device and the Aliyun IoT.
+ * Return:
+ *   - 0 on success or any other error on failure.
+ */
 static int mqtt_client(void)
 {
     int rc = 0;
@@ -141,6 +168,7 @@ static int mqtt_client(void)
     iotx_mqtt_topic_info_t topic_msg = {0};
     char msg_pub[BUF_SIZE] = {0};
 
+    // Aliyun: Creates the username and password used for the MQTT connection based on the DeviceName, DeviceSecret, and ProductKey.
     rc = IOT_SetupConnInfo(PRODUCT_KEY, DEVICE_NAME, DEVICE_SECRET, (void **)&pconn_info);
     if (rc != 0)
     {
@@ -179,6 +207,7 @@ static int mqtt_client(void)
         return -1;
     }
 
+    // Aliyun: MQTT constructor.
     pclient = IOT_MQTT_Construct(&mqtt_params);
     if (pclient == NULL)
     {
@@ -188,38 +217,47 @@ static int mqtt_client(void)
         return -1;
     }
 
+    // Aliyun: Creates a complete MQTT Subscribe packet and sends this packet to the server.
     rc = IOT_MQTT_Subscribe(pclient, TOPIC_DATA, IOTX_MQTT_QOS1, subscribe_callback, NULL);
     if (rc < 0)
     {
         printf("IOT_MQTT_Subscribe() = %d\r\n", rc);
+        // Aliyun: MQTT destructor.
         IOT_MQTT_Destroy(&pclient);
         free(mqtt_params.pwrite_buf);
         free(mqtt_params.pread_buf);
         return -1;
     }
 
+    // ioThinx: Get DI value.
     rc = ioThinx_DI_GetValues(slot, &di_values);
     if (rc != IOTHINX_ERR_OK)
     {
         printf("ioThinx_DI_GetValues() = %d\r\n", rc);
+        // Aliyun: Creates a complete MQTT UnSubscribe packet and sends this packet to the server.
         IOT_MQTT_Unsubscribe(pclient, TOPIC_DATA);
+        // Aliyun: MQTT destructor.
         IOT_MQTT_Destroy(&pclient);
         free(mqtt_params.pwrite_buf);
         free(mqtt_params.pread_buf);
         return -1;
     }
 
+    // ioThinx: Get DO value.
     rc = ioThinx_DO_GetValues(slot, &do_values);
     if (rc != IOTHINX_ERR_OK)
     {
         printf("ioThinx_DO_GetValues() = %d\r\n", rc);
+        // Aliyun: Creates a complete MQTT UnSubscribe packet and sends this packet to the server.
         IOT_MQTT_Unsubscribe(pclient, TOPIC_DATA);
+        // Aliyun: MQTT destructor.
         IOT_MQTT_Destroy(&pclient);
         free(mqtt_params.pwrite_buf);
         free(mqtt_params.pread_buf);
         return -1;
     }
 
+    // Aliyun: Set data.
     DI_Values = di_values;
     DO_Values = do_values;
 
@@ -233,11 +271,14 @@ static int mqtt_client(void)
     topic_msg.payload = msg_pub;
     topic_msg.payload_len = strlen(msg_pub);
 
+    // Aliyun: Creates a complete MQTT Publish packet and sends this packet to the server.
     rc = IOT_MQTT_Publish(pclient, TOPIC_DATA, &topic_msg);
     if (rc < 0)
     {
         printf("IOT_MQTT_Publish() = %d\r\n", rc);
+        // Aliyun: Creates a complete MQTT UnSubscribe packet and sends this packet to the server.
         IOT_MQTT_Unsubscribe(pclient, TOPIC_DATA);
+        // Aliyun: MQTT destructor.
         IOT_MQTT_Destroy(&pclient);
         free(mqtt_params.pwrite_buf);
         free(mqtt_params.pread_buf);
@@ -247,11 +288,14 @@ static int mqtt_client(void)
     printf("Send Topic\t: %s\r\n", TOPIC_DATA);
     printf("Send Payload\t: %s\r\n", msg_pub);
 
+    // Aliyun: The main cyclic function that includes the keep-alive timer and receives the packets from the server.
     rc = IOT_MQTT_Yield(pclient, YIELD_TIMEOUT_MS);
     if (rc != 0)
     {
         printf("IOT_MQTT_Yield() = %d\r\n", rc);
+        // Aliyun: Creates a complete MQTT UnSubscribe packet and sends this packet to the server.
         IOT_MQTT_Unsubscribe(pclient, TOPIC_DATA);
+        // Aliyun: MQTT destructor.
         IOT_MQTT_Destroy(&pclient);
         free(mqtt_params.pwrite_buf);
         free(mqtt_params.pread_buf);
@@ -260,35 +304,44 @@ static int mqtt_client(void)
 
     while (true)
     {
+        // Sleep 1 second.
         sleep(1);
 
+        // ioThinx: Get DI value.
         rc = ioThinx_DI_GetValues(slot, &di_values);
         if (rc != IOTHINX_ERR_OK)
         {
             printf("ioThinx_DI_GetValues() = %d\r\n", rc);
+            // Aliyun: Creates a complete MQTT UnSubscribe packet and sends this packet to the server.
             IOT_MQTT_Unsubscribe(pclient, TOPIC_DATA);
+            // Aliyun: MQTT destructor.
             IOT_MQTT_Destroy(&pclient);
             free(mqtt_params.pwrite_buf);
             free(mqtt_params.pread_buf);
             return -1;
         }
 
+        // ioThinx: Get DO value.
         rc = ioThinx_DO_GetValues(slot, &do_values);
         if (rc != IOTHINX_ERR_OK)
         {
             printf("ioThinx_DO_GetValues() = %d\r\n", rc);
+            // Aliyun: Creates a complete MQTT UnSubscribe packet and sends this packet to the server.
             IOT_MQTT_Unsubscribe(pclient, TOPIC_DATA);
+            // Aliyun: MQTT destructor.
             IOT_MQTT_Destroy(&pclient);
             free(mqtt_params.pwrite_buf);
             free(mqtt_params.pread_buf);
             return -1;
         }
 
+        // If no value change of DI or DO.
         if (DI_Values == di_values && DO_Values == do_values)
         {
             continue;
         }
 
+        // Aliyun: Update data.
         DI_Values = di_values;
         DO_Values = do_values;
 
@@ -302,11 +355,14 @@ static int mqtt_client(void)
         topic_msg.payload = msg_pub;
         topic_msg.payload_len = strlen(msg_pub);
 
+        // Aliyun: Creates a complete MQTT Publish packet and sends this packet to the server.
         rc = IOT_MQTT_Publish(pclient, TOPIC_DATA, &topic_msg);
         if (rc < 0)
         {
             printf("IOT_MQTT_Publish() = %d\r\n", rc);
+            // Aliyun: Creates a complete MQTT UnSubscribe packet and sends this packet to the server.
             IOT_MQTT_Unsubscribe(pclient, TOPIC_DATA);
+            // Aliyun: MQTT destructor.
             IOT_MQTT_Destroy(&pclient);
             free(mqtt_params.pwrite_buf);
             free(mqtt_params.pread_buf);
@@ -316,11 +372,14 @@ static int mqtt_client(void)
         printf("Send Topic\t: %s\r\n", TOPIC_DATA);
         printf("Send Payload\t: %s\r\n", msg_pub);
 
+        // Aliyun: The main cyclic function that includes the keep-alive timer and receives the packets from the server.
         rc = IOT_MQTT_Yield(pclient, YIELD_TIMEOUT_MS);
         if (rc != 0)
         {
             printf("IOT_MQTT_Yield() = %d\r\n", rc);
+            // Aliyun: Creates a complete MQTT UnSubscribe packet and sends this packet to the server.
             IOT_MQTT_Unsubscribe(pclient, TOPIC_DATA);
+            // Aliyun: MQTT destructor.
             IOT_MQTT_Destroy(&pclient);
             free(mqtt_params.pwrite_buf);
             free(mqtt_params.pread_buf);
@@ -328,11 +387,12 @@ static int mqtt_client(void)
         }
     }
 
+    // Aliyun: Creates a complete MQTT UnSubscribe packet and sends this packet to the server.
     IOT_MQTT_Unsubscribe(pclient, TOPIC_DATA);
+    // Aliyun: MQTT destructor.
     IOT_MQTT_Destroy(&pclient);
     free(mqtt_params.pwrite_buf);
     free(mqtt_params.pread_buf);
-
     return 0;
 }
 
@@ -340,9 +400,12 @@ int main(int argc, char const *argv[])
 {
     int rc = 0;
 
+    // Aliyun: Prints logs.
     IOT_OpenLog("mqtt");
+    // Aliyun: Sets the log printing level.
     IOT_SetLogLevel(IOT_LOG_DEBUG);
 
+    // ioThinx: Initialize I/O.
     rc = ioThinx_IO_Client_Init();
     if (rc != IOTHINX_ERR_OK)
     {
@@ -350,14 +413,16 @@ int main(int argc, char const *argv[])
         return -1;
     }
 
+    // Aliyun: Mqtt client process.
     rc = mqtt_client();
     if (rc != 0)
     {
         return -1;
     }
 
+    // Aliyun: A debugging function that prints memory usage statistics.
     IOT_DumpMemoryStats(IOT_LOG_DEBUG);
+    // Aliyun: Stops log printing.
     IOT_CloseLog();
-
     return 0;
 }
